@@ -34,8 +34,19 @@ async function request(path, options) {
 }
 
 export const api = {
-  // Health
-  getHealth: () => request('/health'),
+  // Health — accepts 503 (degraded) so we can read database status
+  getHealth: async () => {
+    const res = await fetch(`${API_BASE}/health`);
+    const json = await res.json();
+    if (!json.success) {
+      throw new ApiError(
+        json.error?.code || 'UNKNOWN_ERROR',
+        json.error?.message || 'Health check failed',
+        res.status
+      );
+    }
+    return json.data;
+  },
 
   // Candidates
   getCandidates: () => request('/candidates'),
