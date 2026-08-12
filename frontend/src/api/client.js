@@ -1,4 +1,6 @@
-const API_BASE = '/api';
+// Local dev: Vite proxies /api → localhost:4000
+// Production: set VITE_API_URL=https://hiresmart-9x5i.onrender.com/api (Vercel env or .env.production)
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export class ApiError extends Error {
   constructor(code, message, status) {

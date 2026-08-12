@@ -40,7 +40,17 @@ var import_job = __toESM(require("./routes/job.routes"));
 var import_graph = __toESM(require("./routes/graph.routes"));
 var import_resume = __toESM(require("./routes/resume.routes"));
 const app = (0, import_express.default)();
-app.use((0, import_cors.default)({ origin: import_env.env.CLIENT_URL, credentials: true }));
+app.use((0, import_cors.default)({
+  origin(origin, callback) {
+    const allowed = import_env.env.ALLOWED_ORIGINS;
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true
+}));
 app.use(import_express.default.json({ limit: "10mb" }));
 app.use(import_express.default.urlencoded({ extended: true }));
 app.use("/api/health", import_health.default);

@@ -39,12 +39,19 @@ import_dotenv.default.config({ path: import_path.default.resolve(process.cwd(), 
 function getEnv(key, fallback = "") {
   return process.env[key] || fallback;
 }
+function parseAllowedOrigins(raw) {
+  return (raw || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
 const env = {
   COGNODB_URI: getEnv("COGNODB_URI"),
   COGNODB_USERNAME: getEnv("COGNODB_USERNAME"),
   COGNODB_PASSWORD: getEnv("COGNODB_PASSWORD"),
   PORT: parseInt(process.env.PORT || "4000", 10),
-  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5174",
+  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
+  ALLOWED_ORIGINS: parseAllowedOrigins(process.env.CLIENT_URL),
   NODE_ENV: process.env.NODE_ENV || "development",
   SEED_RESET: process.env.SEED_RESET === "true"
 };

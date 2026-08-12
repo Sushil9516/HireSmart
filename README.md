@@ -2,6 +2,8 @@
 
 **Graph-powered job discovery through skills and professional networks.**
 
+**Live demo:** [Frontend](https://hire-smart-sigma.vercel.app) · [API](https://hiresmart-9x5i.onrender.com/api/health)
+
 HireGraph is a full-stack demo that matches candidates to jobs by traversing a property graph in CognoDB (Neo4j-compatible). Instead of storing precomputed match scores, it derives fit at query time from `(Candidate)-[:HAS_SKILL]->(Skill)<-[:REQUIRES]-(Job)` overlap, then extends discovery through `(Candidate)-[:CONNECTED_TO]->(Person)-[:WORKS_AT]->(Company)-[:OFFERS]->(Job)` multi-hop paths. A React dashboard surfaces match tiers, skill gaps, network reach, and an interactive graph explorer — all backed by parameterized openCypher queries over Bolt.
 
 ---
@@ -521,7 +523,7 @@ All successful responses follow `{ "success": true, "data": … }`. Errors: `{ "
 | `COGNODB_URI` | `bolt+s://….databases.cognodb.cloud` |
 | `COGNODB_USERNAME` | `cognodb` |
 | `COGNODB_PASSWORD` | *(secret)* |
-| `CLIENT_URL` | `https://your-app.vercel.app` |
+| `CLIENT_URL` | `https://hire-smart-sigma.vercel.app` (comma-separate for multiple: `https://hire-smart-sigma.vercel.app,http://localhost:5173`) |
 | `PORT` | Render sets this automatically — do not hardcode |
 | `NODE_ENV` | `production` |
 
@@ -538,20 +540,7 @@ After first deploy, run the seed script locally against the same CognoDB instanc
 | **Output directory** | `dist` |
 | **Framework** | Vite |
 
-**API routing:** The frontend hardcodes `API_BASE = '/api'` in `frontend/src/api/client.js`. Vite's dev proxy does not exist in production. Add a `frontend/vercel.json` to rewrite API calls to your Render backend:
-
-```json
-{
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://your-backend.onrender.com/api/$1"
-    }
-  ]
-}
-```
-
-Alternatively, change `client.js` to read `import.meta.env.VITE_API_URL` and set that variable in Vercel — this env var is **not** implemented in the repo today.
+**API routing:** Production builds read `VITE_API_URL` from `frontend/.env.production` (currently `https://hiresmart-9x5i.onrender.com/api`). Local dev falls back to `/api` via the Vite proxy. You can override in the Vercel dashboard by setting `VITE_API_URL` if the Render URL changes.
 
 ### CORS
 
@@ -565,8 +554,8 @@ cors({ origin: env.CLIENT_URL, credentials: true })
 
 ### Post-deploy verification
 
-1. `curl https://your-backend.onrender.com/api/health` → `"database": "connected"`.
-2. Open the Vercel frontend URL → dashboard loads without the "Graph database unavailable" banner.
+1. `curl https://hiresmart-9x5i.onrender.com/api/health` → `"database": "connected"`.
+2. Open [https://hire-smart-sigma.vercel.app](https://hire-smart-sigma.vercel.app) → dashboard loads without the "Graph database unavailable" banner.
 3. Confirm `cand-1` shows a **HIGH** match (~83%) on **Senior Full Stack Engineer** at NovaTech.
 4. Click into the job → matched skills (React, TypeScript, Node.js, PostgreSQL, Neo4j) and missing **Docker**; introduction path shows **Rahul Verma**.
 5. `/network` → direct connections and network skills include Docker via Rahul.
@@ -626,15 +615,15 @@ Checks 13 GET endpoints + `POST /api/jobs/parse-jd` + `POST /api/resume/parse`. 
 | **`GET_SKILL_DEMAND` unused** | Query exists in `matching.js` / `matching.service.js` but no route exposes it. |
 | **`RELATED_TO` skill edges seeded but unused** | No "skills to learn next" recommendation API yet. |
 | **`zod` dependency unused** | Listed in `backend/package.json` but never imported — dead dependency. |
-| **No production API env var** | Frontend hardcodes `/api`; production needs `vercel.json` rewrites or a `VITE_API_URL` implementation. |
+| **Render cold starts** | Free tier spins down; first request after idle can take 30–60s before API responds. |
 | **Single demo write path** | No UI to add skills, connections, or jobs — read-only except parsers. |
 | **No authentication** | All endpoints are open; suitable for a take-home demo only. |
 
 **Next steps with more time:**
 
-1. Add `VITE_API_URL` support in `client.js` and document it for Vercel — removes the rewrite workaround.
-2. Expose `GET /api/skills/demand` using the existing `GET_SKILL_DEMAND` query and surface a "market demand" panel.
-3. Replace dictionary parsing with an optional LLM fallback (keep dictionary as offline default) and expand skill coverage beyond the seeded 18.
+1. Expose `GET /api/skills/demand` using the existing `GET_SKILL_DEMAND` query and surface a "market demand" panel.
+2. Replace dictionary parsing with an optional LLM fallback (keep dictionary as offline default) and expand skill coverage beyond the seeded 18.
+3. Add authentication and write APIs for skills, connections, and jobs.
 
 ---
 
